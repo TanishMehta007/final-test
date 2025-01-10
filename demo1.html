@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scrambled Image Puzzle</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      width: 100%;
+      height: 100vh;
+      background: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    .puzzle-piece {
+      position: absolute;
+      border: 2px solid #444;
+      cursor: grab;
+      touch-action: none;
+    }
+    .puzzle-piece:active {
+      cursor: grabbing;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+  /*******************************************************
+   * 1. LOAD IMAGE
+   *******************************************************/
+  const imagePath = "https://i.imgur.com/bG7LDuo.jpeg";
+
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = imagePath;
+
+  img.onload = function () {
+    createPuzzlePieces(img);
+  };
+
+  /*******************************************************
+   * 2. SPLIT IMAGE INTO 8 PIECES AND RENDER
+   *******************************************************/
+  function createPuzzlePieces(loadedImage) {
+    const rows = 4;
+    const cols = 2;
+    const totalPieces = rows * cols;
+
+    const imageWidth = loadedImage.width;
+    const imageHeight = loadedImage.height;
+
+    const pieceWidth = imageWidth / cols;
+    const pieceHeight = imageHeight / rows;
+
+    const reducedWidth = pieceWidth / 2;
+    const reducedHeight = pieceHeight / 2;
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const x = col * pieceWidth;
+        const y = row * pieceHeight;
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = reducedWidth;
+        canvas.height = reducedHeight;
+
+        ctx.drawImage(
+          loadedImage,
+          x,
+          y,
+          pieceWidth,
+          pieceHeight,
+          0,
+          0,
+          reducedWidth,
+          reducedHeight
+        );
+
+        const pieceDataURL = canvas.toDataURL("image/png");
+
+        const pieceElem = document.createElement("div");
+        pieceElem.className = "puzzle-piece";
+        pieceElem.style.width = `${reducedWidth}px`;
+        pieceElem.style.height = `${reducedHeight}px`;
+        pieceElem.style.backgroundImage = `url('${pieceDataURL}')`;
+        pieceElem.style.backgroundSize = `${reducedWidth}px ${reducedHeight}px`;
+
+        const randomX = Math.random() * (window.innerWidth - reducedWidth);
+        const randomY = Math.random() * (window.innerHeight - reducedHeight);
+        pieceElem.style.left = `${randomX}px`;
+        pieceElem.style.top = `${randomY}px`;
+
+        document.body.appendChild(pieceElem);
+
+        addDragEvents(pieceElem);
+      }
+    }
+  }
+
+  /*******************************************************
+   * 3. DRAG & DROP FUNCTIONALITY
+   *******************************************************/
+  function addDragEvents(pieceElem) {
+    let offsetX = 0, offsetY = 0;
+    let isDragging = false;
+
+    pieceElem.addEventListener("pointerdown", (e) => {
+      isDragging = true;
+      offsetX = e.clientX - parseFloat(pieceElem.style.left);
+      offsetY = e.clientY - parseFloat(pieceElem.style.top);
+      pieceElem.setPointerCapture(e.pointerId);
+    });
+
+    pieceElem.addEventListener("pointermove", (e) => {
+      if (!isDragging) return;
+      const newX = e.clientX - offsetX;
+      const newY = e.clientY - offsetY;
+      pieceElem.style.left = newX + "px";
+      pieceElem.style.top = newY + "px";
+    });
+
+    pieceElem.addEventListener("pointerup", (e) => {
+      isDragging = false;
+      pieceElem.releasePointerCapture(e.pointerId);
+    });
+
+    pieceElem.addEventListener("pointercancel", () => {
+      isDragging = false;
+    });
+  }
+</script>
+
+</body>
+</html>
